@@ -21,7 +21,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # --- install pins (the one place versions are declared) --------------------------
 ARG VERILATOR_APT=5.032-1        # ubuntu:26.04 candidate (upstream Verilator 5.032)
 ARG COCOTB_PIP=1.9.2             # house-pinned coroutine testbench framework
-ARG VYGES_SIM_VERSION=2026.07.1  # Vyges distro date-release (a Vyges label, not a tool version)
+ARG VYGES_SIM_VERSION=26.04       # Vyges release = the Ubuntu LTS base (this distro's identity)
 
 # Verilator (pinned) + the C++ toolchain it needs at RUNTIME (it compiles the C++ it
 # generates), plus Python for cocotb.

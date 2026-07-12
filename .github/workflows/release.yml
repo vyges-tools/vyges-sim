@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Vyges date-release (e.g. 2026.07.1)"
+        description: "Vyges date-release (the Ubuntu LTS, e.g. 26.04; add -N for intra-LTS rebuilds)"
         required: true
-        default: "2026.07.1"
+        default: "26.04"
 
 permissions:
   packages: write   # push to ghcr.io
