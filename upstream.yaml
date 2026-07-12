@@ -16,8 +16,7 @@
 # appears — it is just a Dockerfile change).
 
 base:
-  image: ubuntu:26.04
-  digest: "sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e"
+  image: ubuntu:26.04     # LTS tag — tracks 26.04 point releases; conscious bump only at the next LTS
   updated_at: "2026-07-12T21:00:00Z"
 
 packages:

@@ -12,8 +12,10 @@
 # descriptor — generated at build time by *querying the installed tools*, so it can
 # never drift from what is actually in the image. Nothing is version-hardcoded twice.
 
-# Base pinned by digest for reproducibility (ubuntu:26.04, resolved 2026-07-12).
-FROM ubuntu:26.04@sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e
+# Pinned to the 26.04 LTS *tag* (not a digest, not :latest): auto-tracks 26.04 point
+# releases + security within the LTS (zero maintenance), but will NOT silently jump to
+# the next Ubuntu — that stays a deliberate, re-validated bump (~every 2 years).
+FROM ubuntu:26.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # --- install pins (the one place versions are declared) --------------------------
