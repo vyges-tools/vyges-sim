@@ -1,0 +1,38 @@
+# vyges-sim build pin — the source of truth for what we ship.
+#
+# PACKAGE-PINNED (not source-built). Unlike vyges-openroad / vyges-klayout — which
+# build upstream from a pinned git commit because those tools are not adequately
+# packaged — Verilator is a normal apt package and is version-tolerant for our use
+# (any 5.x produces the FST/VCD our readers consume). So this distro pins the Ubuntu
+# base image + apt/pip package versions, which is fully reproducible. A sync workflow
+# bumps these when Ubuntu / Verilator / cocotb move (opening a PR).
+#
+# These are INSTALL PINS only (what we install). The image's vyges-tool.json descriptor
+# is generated at build time by *querying the installed tools*, so reported versions
+# can never drift from these pins.
+#
+# Single image: Verilator + cocotb in one layer. There is no separate simulator-only
+# image (the house harness is cocotb; split later only if a real sim-only consumer
+# appears — it is just a Dockerfile change).
+
+base:
+  image: ubuntu:26.04
+  digest: "sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e"
+  updated_at: "2026-07-12T21:00:00Z"
+
+packages:
+  verilator:
+    source: apt
+    version: "5.032-1"        # ubuntu:26.04 candidate (upstream Verilator 5.032)
+    license: Apache-2.0        # Verilator: Apache-2.0 OR LGPL-3.0
+  cocotb:
+    source: pip
+    version: "1.9.2"           # house-pinned coroutine testbench framework
+    license: BSD-3-Clause
+  python:
+    source: apt
+    version: "3.14"            # whatever ubuntu:26.04 ships (informational)
+
+# VALIDATED 2026-07-12 on ovs-intelsdn-2 (docker): image builds; verilator 5.032 +
+# cocotb 1.9.2 on python 3.14; counter --trace-fst -> counter.fst parses through
+# vyges-loom's FST reader with correct toggle counts (clk 79, d/q0/y 14, q1 13, bus 78).

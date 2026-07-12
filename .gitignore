@@ -1,0 +1,5 @@
+target
+*.log
+obj_dir/
+*.fst
+*.vcd
