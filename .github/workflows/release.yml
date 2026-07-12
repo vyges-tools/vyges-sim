@@ -1,0 +1,58 @@
+name: release
+
+# Build the pinned vyges-sim image and publish it to ghcr.io.
+#
+# MANUAL by design. The image only changes when we rebase on a new Ubuntu release
+# (which bumps the apt Verilator / Python and possibly cocotb) — until then there is
+# nothing new to ship, so this is workflow_dispatch, not push-triggered. The
+# sync-check workflow opens a reminder issue when a newer Ubuntu warrants a bump.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Vyges date-release (e.g. 2026.07.1)"
+        required: true
+        default: "2026.07.1"
+
+permissions:
+  packages: write   # push to ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          IMG=ghcr.io/vyges-tools/vyges-sim
+          docker build --build-arg VYGES_SIM_VERSION="$VERSION" \
+            -t "$IMG:$VERSION" -t "$IMG:latest" .
+          echo "IMG=$IMG" >> "$GITHUB_ENV"
+
+      - name: Validate (tools present + descriptor generated)
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          docker run --rm "$IMG:$VERSION" bash -c '
+            set -e
+            verilator --version
+            python3 -c "import cocotb; print(\"cocotb\", cocotb.__version__)"
+            echo "--- descriptor ---"
+            cat /opt/vyges/vyges-tool.json'
+
+      - name: Push
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          docker push "$IMG:$VERSION"
+          docker push "$IMG:latest"

@@ -1,0 +1,50 @@
+name: sync-check
+
+# vyges-sim is package-pinned to an Ubuntu release, so it only needs a new release
+# when a newer Ubuntu ships a different Verilator. This job checks that monthly and
+# opens ONE reminder issue when the rolling `ubuntu:latest` Verilator candidate differs
+# from our pin — the signal to rebase + cut a release. It does NOT auto-bump or release.
+on:
+  schedule:
+    - cron: "0 6 1 * *"   # 06:00 UTC on the 1st of each month
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare pinned Verilator to newer Ubuntu
+        id: cmp
+        run: |
+          PINNED=$(grep -E '^[[:space:]]*version:' upstream.yaml | grep -oE '5\.[0-9]+' | head -1)
+          LATEST=$(docker run --rm ubuntu:latest bash -c \
+            'apt-get update -qq >/dev/null 2>&1 && apt-cache policy verilator 2>/dev/null' \
+            | grep -i candidate | grep -oE '5\.[0-9]+' | head -1)
+          echo "pinned=$PINNED" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "pinned=$PINNED  ubuntu:latest candidate=$LATEST"
+          if [ -n "$LATEST" ] && [ "$LATEST" != "$PINNED" ]; then
+            echo "drift=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "drift=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open reminder issue on drift (deduped)
+        if: steps.cmp.outputs.drift == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PINNED: ${{ steps.cmp.outputs.pinned }}
+          LATEST: ${{ steps.cmp.outputs.latest }}
+        run: |
+          TITLE="Rebase vyges-sim: newer Ubuntu ships Verilator ${LATEST}"
+          if gh issue list --state open --search "in:title Rebase vyges-sim: newer Ubuntu" | grep -q .; then
+            echo "reminder issue already open; skipping"
+            exit 0
+          fi
+          gh issue create --title "$TITLE" --body \
+            "A newer Ubuntu offers Verilator ${LATEST} (we pin ${PINNED}). When ready, bump the base image + \`verilator=\` in \`upstream.yaml\`/\`Dockerfile\`, re-validate an FST round-trip, and run the \`release\` workflow. No action is required until then."
