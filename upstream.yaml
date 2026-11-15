@@ -32,6 +32,6 @@ packages:
     source: apt
     version: "3.14"            # whatever ubuntu:26.04 ships (informational)
 
-# VALIDATED 2026-07-12 on ovs-intelsdn-2 (docker): image builds; verilator 5.032 +
+# VALIDATED 2026-07-12 on the build host (docker): image builds; verilator 5.032 +
 # cocotb 1.9.2 on python 3.14; counter --trace-fst -> counter.fst parses through
 # vyges-loom's FST reader with correct toggle counts (clk 79, d/q0/y 14, q1 13, bus 78).
